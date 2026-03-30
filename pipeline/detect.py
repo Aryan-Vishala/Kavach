@@ -2,10 +2,8 @@ from core.utils import extract_frames
 from core.hashing import compute_hashes, hash_similarity
 from core.orb import compute_orb, match_orb
 from storage.storage import load_db
-from core.audio import extract_audio_features, compare_audio
 
 
-# 🔁 Temporal consistency
 def compute_temporal_score(matched_indices):
     if len(matched_indices) < 2:
         return 0
@@ -33,9 +31,6 @@ def detect_video(input_video, mode="fast"):
     if len(input_frames) == 0:
         return {"match": False, "reason": "No frames extracted"}
 
-    # ✅ Extract audio ONCE
-    input_audio = extract_audio_features(input_video)
-
     db = load_db()
 
     best_match = None
@@ -49,19 +44,9 @@ def detect_video(input_video, mode="fast"):
 
         stored_hashes = video["hashes"]
         stored_orb = video.get("orb", [])
-        stored_audio = video.get("audio")
 
         similarities = []
         matched_indices = []
-
-        # 🔊 AUDIO MATCHING
-        audio_score = 0
-        if stored_audio is not None and input_audio is not None:
-            import numpy as np
-            stored_audio = np.array(stored_audio)
-            audio_score = compare_audio(input_audio, stored_audio)
-
-        print("Audio Score:", round(audio_score, 3))
 
         # 🔹 HASH MATCHING
         for f in input_frames:
@@ -98,7 +83,6 @@ def detect_video(input_video, mode="fast"):
 
         print(f"Hash: {round(hash_score,3)} | Temp: {round(temporal_score,3)}")
 
-        # 🎯 PRE SCORE
         pre_score = (
             0.75 * hash_score +
             0.2 * match_ratio +
@@ -162,33 +146,24 @@ def detect_video(input_video, mode="fast"):
 
         print("ORB Score:", round(orb_score, 3))
 
-        # 🎯 FINAL SCORE (🔥 UPDATED WITH AUDIO)
+        # 🎯 FINAL SCORE
         if mode == "strict":
-            final_score = (
-                0.4 * pre_score +
-                0.3 * orb_score +
-                0.3 * audio_score
-            )
+            final_score = (0.5 * pre_score + 0.5 * orb_score)
         else:
-            final_score = (
-                pre_score if not run_orb
-                else (0.6 * pre_score + 0.2 * orb_score + 0.2 * audio_score)
-            )
+            final_score = pre_score if not run_orb else (0.7 * pre_score + 0.3 * orb_score)
 
         print(f"Final Score: {round(final_score,3)}")
 
-        # 🔁 Track best
         if final_score > best_score:
             best_score = final_score
             best_match = video["video_id"]
 
-    # 🏁 FINAL DECISION
     if best_score >= 0.65:
         return {
             "match": True,
             "video_id": best_match,
             "confidence": float(best_score),
-            "stage": "hash+orb+audio"
+            "stage": "hash+orb"
         }
 
     return {
