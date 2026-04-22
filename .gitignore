@@ -6,3 +6,9 @@ __pycache__/
 .venv/
 kavach_cnn/
 node_modules/
+
+# Large files
+storage/db.json
+storage/db_v2.json
+data/platforms/**/*.mp4
+*.mp4
