@@ -1,0 +1,9 @@
+{
+  "timeline": [
+    {"platform": "Youtube", "type": "Full", "score": 1.0},
+    {"platform": "Instagram", "type": "Cropped", "score": 0.78},
+    {"platform": "Twitter", "type": "Edited", "score": 0.65}
+  ],
+  "risk": "HIGH",
+  "origin": "Youtube"
+}

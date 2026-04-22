@@ -1,22 +1,8 @@
-# 🔥 Python
 __pycache__/
 *.pyc
-
-# 🔥 Virtual environment
+*.pkl
+*.npy
+.env
 .venv/
-venv/
-
-# 🔥 Videos (IMPORTANT)
-*.mp4
-*.avi
-*.mov
-
-# 🔥 Audio temp
-*.wav
-
-# 🔥 Database
-storage/db.json
-
-# 🔥 OS
-.DS_Store
-Thumbs.db
+kavach_cnn/
+node_modules/

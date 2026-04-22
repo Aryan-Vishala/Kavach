@@ -1,43 +1,28 @@
 import uuid
-from core.utils import extract_frames
-from core.hashing import compute_hashes
-from core.orb import compute_orb
+import os
+import numpy as np
+from pipeline.fast_pipeline import FastVideoProcessor
 from storage.storage import add_video
-from core.audio import extract_audio_features
+
 
 def register_video(video_path):
 
-    print("📥 Registering video...")
+    print("📥 Registering video (CNN pipeline)...")
 
-    frames = extract_frames(video_path)
-    audio_features = extract_audio_features(video_path)
+    processor = FastVideoProcessor()
 
-    hashes = []
-    orb_data = []
+    # Extract embeddings (list of frames → each has (5,1280))
+    embeddings = processor.process(video_path)
 
-    for i, frame in enumerate(frames):
-
-        phash, dhash = compute_hashes(frame)
-        _, des = compute_orb(frame)
-
-        hashes.append({
-            "frame": i,
-            "phash": str(phash),
-            "dhash": str(dhash)
-        })
-
-        # Store ORB descriptors (convert to list for JSON)
-        if des is not None:
-            orb_data.append(des.tolist())
-        else:
-            orb_data.append(None)
+    video_id = str(uuid.uuid4())
+    os.makedirs("storage/embeddings", exist_ok=True)
+    embedding_path = f"storage/embeddings/{video_id}.npy"
+    np.save(embedding_path, embeddings)
 
     video_data = {
-        "video_id": str(uuid.uuid4()),
-        "total_frames": len(frames),
-        "hashes": hashes,
-        "orb": orb_data,
-        "audio": audio_features.tolist() if audio_features is not None else None,
+        "video_id": video_id,
+        "num_frames": len(embeddings),
+        "embedding_path": embedding_path
     }
 
     add_video(video_data)
@@ -45,4 +30,4 @@ def register_video(video_path):
     print("✅ Video registered successfully!")
     print("Video ID:", video_data["video_id"])
 
-    return video_data["video_id"]
+    return video_data["video_id"]
