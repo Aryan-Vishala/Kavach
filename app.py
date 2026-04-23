@@ -43,90 +43,90 @@ hr {
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🛡️ Kavach: AI Content Intelligence System")
-st.markdown("Track • Detect • Protect digital media")
+st.markdown("""
+<h1 style='text-align: center; font-size: 42px;'>
+🛡️ Kavach — Content Intelligence Dashboard
+</h1>
+<p style='text-align: center; color: #9ca3af;'>
+AI-powered tracking of sports media across platforms
+</p>
+""", unsafe_allow_html=True)
 
-st.markdown("### 🎬 Demo Mode")
+st.markdown("### 🎬 Demo")
 
-if st.button("🚀 Run Demo"):
+run = st.button("🚀 Run Intelligence Scan", use_container_width=True)
 
-    st.info("🔍 Analyzing content...")
+if run:
 
-    # fake delay
-    import time
-    for step in ["Scanning YouTube...", "Scanning Instagram...", "Scanning Twitter..."]:
-        st.write(step)
-        time.sleep(0.5)
+    progress = st.progress(0)
+
+    steps = [
+        "Scanning YouTube...",
+        "Scanning Instagram...",
+        "Scanning Twitter...",
+        "Analyzing propagation...",
+        "Generating intelligence report..."
+    ]
+
+    for i, step in enumerate(steps):
+        st.write(f"🔍 {step}")
+        time.sleep(0.4)
+        progress.progress((i + 1) * 20)
 
     st.success("✅ Analysis Complete")
 
-    st.subheader("⏳ Content Propagation Timeline")
+    st.subheader("⏳ Propagation Timeline")
 
-    timeline = [
-        ("YouTube", "Full Upload", "08:12 PM"),
-        ("Instagram", "Cropped Version", "08:45 PM"),
-        ("Twitter", "Edited Version", "09:10 PM"),
+    timeline_data = [
+        ("08:12 PM", "YouTube", "Full Upload"),
+        ("08:45 PM", "Instagram", "Cropped"),
+        ("09:10 PM", "Twitter", "Edited"),
     ]
 
-    for platform, event, time_stamp in timeline:
-        st.markdown(f"**{time_stamp}** — 🔵 {platform} → {event}")
+    timeline_box = st.empty()
+
+    for t, platform, action in timeline_data:
+        timeline_box.markdown(f"""
+        **{t}** — 🔵 {platform} → {action}
+        """)
+        time.sleep(0.7)
 
     st.divider()
 
     # INTELLIGENCE SUMMARY
-    st.subheader("📊 Intelligence Summary")
+    st.markdown("## 📊 Intelligence Summary")
 
-    def animate_metric(label, value):
-        placeholder = st.empty()
-        for i in range(1, value + 1):
-            placeholder.metric(label, str(i))
-            time.sleep(0.05)
+    col1, col2, col3, col4 = st.columns(4)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        animate_metric("Platforms", 3)
-    with col2:
-        animate_metric("Videos Found", 7)
-    with col3:
-        animate_metric("Channels", 5)
-    with col4:
-        st.metric("Spread Speed", "High")
-    with col5:
-        st.metric("Risk", "HIGH")
+    col1.metric("Platforms", "3")
+    col2.metric("Videos Found", "7")
+    col3.metric("Channels", "5")
+    col4.metric("Risk Level", "HIGH")
     
     st.divider()
 
     # CONFIDENCE BREAKDOWN
     import pandas as pd
-    st.subheader("📉 Confidence Breakdown")
-    conf_data = {
-        "Metric": ["Visual Similarity", "Frame Coverage", "Temporal Consistency"],
-        "Score": [0.91, 0.85, 0.88]
-    }
-    df_conf = pd.DataFrame(conf_data)
-    st.bar_chart(df_conf.set_index("Metric"))
+    st.subheader("📉 Confidence Analysis")
+
+    conf = pd.DataFrame({
+        "Metric": ["Visual", "Temporal", "Coverage"],
+        "Score": [0.91, 0.88, 0.85]
+    })
+
+    st.bar_chart(conf.set_index("Metric"))
 
     st.divider()
 
     # PLATFORM BREAKDOWN & MODIFICATION DISTRIBUTION
-    colA, colB = st.columns(2)
-    with colA:
-        st.subheader("📊 Platform Distribution")
-        data = {
-            "Platform": ["YouTube", "Instagram", "Twitter"],
-            "Videos": [2, 2, 3]
-        }
-        df = pd.DataFrame(data)
-        st.bar_chart(df.set_index("Platform"))
-        
-    with colB:
-        st.subheader("🧪 Modification Analysis")
-        mod_data = {
-            "Type": ["Full", "Cropped", "Edited", "Reversed", "Speed"],
-            "Count": [2, 1, 2, 1, 1]
-        }
-        df_mod = pd.DataFrame(mod_data)
-        st.bar_chart(df_mod.set_index("Type"))
+    st.subheader("📊 Platform Distribution")
+
+    data = pd.DataFrame({
+        "Platform": ["YouTube", "Instagram", "Twitter"],
+        "Videos": [2, 2, 3]
+    })
+
+    st.bar_chart(data.set_index("Platform"))
 
     st.divider()
 
@@ -141,99 +141,48 @@ if st.button("🚀 Run Demo"):
 
     st.divider()
 
+    def video_card(title, path, desc):
+        st.markdown(f"""
+        <div style='background:rgba(255,255,255,0.05);
+                    padding:12px;
+                    border-radius:12px;
+                    margin-bottom:10px'>
+            <h4 style='margin:0;'>{title}</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        st.video(path)
+        st.caption(desc)
+
     # VIDEOS
     st.subheader("📺 YouTube Variants")
     yt_cols = st.columns(2)
 
     with yt_cols[0]:
-        with st.container():
-            st.markdown("<div style='background:rgba(255,255,255,0.05); padding:10px; border-radius:12px'>", unsafe_allow_html=True)
-            st.video("data/platforms/youtube/full.mp4")
-            st.markdown("""
-            **Type:** Full Copy  
-            **Match Score:** 1.0  
-            **Channel:** sports_fan_123  
-            **Upload Time:** 2 hrs ago  
-            """)
-            st.markdown("</div>", unsafe_allow_html=True)
+        video_card("Full Upload", "data/platforms/youtube/full.mp4", "Match: 1.0 | sports_fan_123 | 2 hrs ago")
 
     with yt_cols[1]:
-        with st.container():
-            st.markdown("<div style='background:rgba(255,255,255,0.05); padding:10px; border-radius:12px'>", unsafe_allow_html=True)
-            st.video("data/platforms/youtube/clip.mp4")
-            st.markdown("""
-            **Type:** Short Clip  
-            **Match Score:** 0.92  
-            **Channel:** highlights_now  
-            **Upload Time:** 1.5 hrs ago  
-            """)
-            st.markdown("</div>", unsafe_allow_html=True)
+        video_card("Clip", "data/platforms/youtube/clip.mp4", "Match: 0.92 | highlights_now | 1.5 hrs ago")
 
     st.subheader("📸 Instagram Variants")
     ig_cols = st.columns(2)
 
     with ig_cols[0]:
-        with st.container():
-            st.markdown("<div style='background:rgba(255,255,255,0.05); padding:10px; border-radius:12px'>", unsafe_allow_html=True)
-            st.video("data/platforms/instagram/cropped.mp4")
-            st.markdown("""
-            **Type:** Cropped  
-            **Match Score:** 0.78  
-            **Channel:** viral.vids  
-            **Upload Time:** 1 hr ago  
-            """)
-            st.markdown("</div>", unsafe_allow_html=True)
+        video_card("Cropped", "data/platforms/instagram/cropped.mp4", "Match: 0.78 | viral.vids | 1 hr ago")
 
     with ig_cols[1]:
-        with st.container():
-            st.markdown("<div style='background:rgba(255,255,255,0.05); padding:10px; border-radius:12px'>", unsafe_allow_html=True)
-            st.video("data/platforms/instagram/10sec_clip.mp4")
-            st.markdown("""
-            **Type:** Short Clip  
-            **Match Score:** 0.81  
-            **Channel:** insta_reels  
-            **Upload Time:** 45 mins ago  
-            """)
-            st.markdown("</div>", unsafe_allow_html=True)
+        video_card("Short Clip", "data/platforms/instagram/10sec_clip.mp4", "Match: 0.81 | insta_reels | 45 mins ago")
 
     st.subheader("🐦 Twitter Variants")
     tw_cols = st.columns(3)
 
     with tw_cols[0]:
-        with st.container():
-            st.markdown("<div style='background:rgba(255,255,255,0.05); padding:10px; border-radius:12px'>", unsafe_allow_html=True)
-            st.video("data/platforms/twitter/filtered.mp4")
-            st.markdown("""
-            **Type:** Edited  
-            **Match Score:** 0.65  
-            **Channel:** @fast_news  
-            **Upload Time:** 10 mins ago  
-            """)
-            st.markdown("</div>", unsafe_allow_html=True)
+        video_card("Edited", "data/platforms/twitter/filtered.mp4", "Match: 0.65 | @fast_news | 10 mins ago")
 
     with tw_cols[1]:
-        with st.container():
-            st.markdown("<div style='background:rgba(255,255,255,0.05); padding:10px; border-radius:12px'>", unsafe_allow_html=True)
-            st.video("data/platforms/twitter/reversed.mp4")
-            st.markdown("""
-            **Type:** Reversed  
-            **Match Score:** 0.62  
-            **Channel:** @anon_user  
-            **Upload Time:** 5 mins ago  
-            """)
-            st.markdown("</div>", unsafe_allow_html=True)
+        video_card("Reversed", "data/platforms/twitter/reversed.mp4", "Match: 0.62 | @anon_user | 5 mins ago")
 
     with tw_cols[2]:
-        with st.container():
-            st.markdown("<div style='background:rgba(255,255,255,0.05); padding:10px; border-radius:12px'>", unsafe_allow_html=True)
-            st.video("data/platforms/twitter/speed_2x.mp4")
-            st.markdown("""
-            **Type:** 2x Speed  
-            **Match Score:** 0.68  
-            **Channel:** @trend_tracker  
-            **Upload Time:** Just now  
-            """)
-            st.markdown("</div>", unsafe_allow_html=True)
+        video_card("2x Speed", "data/platforms/twitter/speed_2x.mp4", "Match: 0.68 | @trend_tracker | Just now")
 
     st.divider()
 
@@ -284,15 +233,15 @@ if st.button("🚀 Run Demo"):
         ("TW Filtered", "TW Speed"): "speedup",
     }
 
-    fig, ax = plt.subplots(figsize=(12, 7))
+    fig, ax = plt.subplots(figsize=(12, 6))
     nx.draw(
         G,
         pos,
         with_labels=True,
         node_size=3500,
         node_color=color_map,
+        edge_color="#38bdf8",
         font_color="white",
-        edge_color="cyan",
         width=2,
         font_size=9,
         ax=ax
@@ -303,3 +252,11 @@ if st.button("🚀 Run Demo"):
     fig.patch.set_facecolor("#020617")
 
     st.pyplot(fig)
+
+    # FINAL TOUCH — CLEAN FOOTER
+    st.markdown("""
+    <hr>
+    <p style='text-align:center; color:#6b7280'>
+    Built with AI for Sports Media Protection • Kavach
+    </p>
+    """, unsafe_allow_html=True)
