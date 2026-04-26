@@ -1,6 +1,9 @@
 import streamlit as st
 import json
 import time
+from gemini_summary import generate_gemini_summary
+from pipeline.report_generator import compute_risk_score, risk_label
+from pipeline.timeline import plot_timeline
 
 st.set_page_config(layout="wide")
 
@@ -54,6 +57,23 @@ AI-powered tracking of sports media across platforms
 
 st.markdown("### 🎬 Demo")
 
+with st.sidebar:
+    st.markdown("## ⚙️ Configuration")
+    gemini_key = st.text_input("Gemini API Key", type="password", 
+                                placeholder="Paste your key here")
+    st.caption("Get yours free at aistudio.google.com")
+    
+    st.markdown("---")
+    confidence_threshold = st.slider(
+        "🎚️ Detection Sensitivity",
+        min_value=0.50,
+        max_value=0.99,
+        value=0.70,
+        step=0.01,
+        help="Minimum confidence score to flag a match. Lower = catch more (may include false positives). Higher = only flag near-certain matches."
+    )
+    st.caption(f"Currently flagging matches above **{int(confidence_threshold * 100)}%** confidence")
+
 run = st.button("🚀 Run Intelligence Scan", use_container_width=True)
 
 if run:
@@ -75,21 +95,47 @@ if run:
 
     st.success("✅ Analysis Complete")
 
-    st.subheader("⏳ Propagation Timeline")
+    # --- GEMINI INTELLIGENCE SUMMARY ---
+    st.markdown("## 🤖 AI Intelligence Summary")
 
-    timeline_data = [
-        ("08:12 PM", "YouTube", "Full Upload"),
-        ("08:45 PM", "Instagram", "Cropped"),
-        ("09:10 PM", "Twitter", "Edited"),
+    # Mock channels for the demo summary
+    channels = [
+        {"platform": "youtube", "channel": "sports_fan_123", "type": "full", "confidence": 0.98, "upload_time": "08:12 PM"},
+        {"platform": "instagram", "channel": "viral.vids", "type": "cropped", "confidence": 0.85, "upload_time": "08:45 PM"},
+        {"platform": "twitter", "channel": "@trend_tracker", "type": "edited", "confidence": 0.72, "upload_time": "09:10 PM"},
     ]
 
-    timeline_box = st.empty()
+    if gemini_key:
+        with st.spinner("Gemini is analyzing the propagation data..."):
+            summary = generate_gemini_summary(channels, gemini_key)
+        
+        st.info(summary)
+    else:
+        st.warning("⚠️ Add your Gemini API key in the sidebar to enable AI summaries.")
 
-    for t, platform, action in timeline_data:
-        timeline_box.markdown(f"""
-        **{t}** — 🔵 {platform} → {action}
-        """)
-        time.sleep(0.7)
+    st.subheader("⏳ Propagation Timeline")
+
+    from datetime import datetime, timedelta
+
+    # Demo timeline data — replace with real results when engine connected
+    demo_timeline_results = [
+        {"platform": "youtube",   "channel": "sports_fan_123", "upload_time": "08:12 PM",
+        "type": "full",    "confidence": 0.95, "video_id": "v1",
+        "timestamp": int((datetime.now() - timedelta(minutes=90)).timestamp())},
+        {"platform": "instagram", "channel": "viral.vids",     "upload_time": "08:45 PM",
+        "type": "cropped", "confidence": 0.78, "video_id": "v1",
+        "timestamp": int((datetime.now() - timedelta(minutes=57)).timestamp())},
+        {"platform": "twitter",   "channel": "@fast_news",     "upload_time": "09:10 PM",
+        "type": "edited",  "confidence": 0.65, "video_id": "v1",
+        "timestamp": int((datetime.now() - timedelta(minutes=32)).timestamp())},
+        {"platform": "twitter",   "channel": "@trend_tracker", "upload_time": "09:20 PM",
+        "type": "reversed","confidence": 0.62, "video_id": "v1",
+        "timestamp": int((datetime.now() - timedelta(minutes=22)).timestamp())},
+    ]
+
+    timeline_fig = plot_timeline(demo_timeline_results)
+    if timeline_fig:
+        st.pyplot(timeline_fig)
 
     st.divider()
 
@@ -130,14 +176,49 @@ if run:
 
     st.divider()
 
+    st.subheader("🎯 Platform Risk Scores")
+
+    # Shared results for risk scores and table
+    all_results = [
+        {"platform": "youtube",   "confidence": 0.95, "type": "full",    "channel": "sports_fan_123", "time": "08:12 PM"},
+        {"platform": "youtube",   "confidence": 0.92, "type": "cropped", "channel": "highlights_now", "time": "08:30 PM"},
+        {"platform": "instagram", "confidence": 0.78, "type": "cropped", "channel": "viral.vids",     "time": "08:45 PM"},
+        {"platform": "instagram", "confidence": 0.81, "type": "edited",  "channel": "insta_reels",    "time": "08:55 PM"},
+        {"platform": "twitter",   "confidence": 0.65, "type": "edited",  "channel": "@fast_news",     "time": "09:10 PM"},
+        {"platform": "twitter",   "confidence": 0.62, "type": "reversed","channel": "@anon_user",     "time": "09:15 PM"},
+        {"platform": "twitter",   "confidence": 0.68, "type": "speed",   "channel": "@trend_tracker", "time": "09:20 PM"},
+    ]
+
+    scores = compute_risk_score(all_results)
+
+    risk_cols = st.columns(len(scores))
+    for col, (platform, score) in zip(risk_cols, scores.items()):
+        label = risk_label(score)
+        col.metric(
+            label=f"{platform.capitalize()}",
+            value=f"{score}/100",
+            delta=label
+        )
+
+    st.divider()
+
     # LEAK SOURCES TABLE
     st.subheader("🕵️ Leak Sources")
-    channels = [
-        {"Platform": "YouTube", "Channel": "sports_fan_123", "Type": "Full"},
-        {"Platform": "Instagram", "Channel": "viral.vids", "Type": "Cropped"},
-        {"Platform": "Twitter", "Channel": "@trend_tracker", "Type": "Edited"},
-    ]
-    st.table(channels)
+    
+    # Filter results by threshold
+    filtered_results = []
+    for r in all_results:
+        if r["confidence"] >= confidence_threshold:
+            # Add a formatted match string for the table
+            r_display = r.copy()
+            r_display["Match %"] = f"{int(r['confidence'] * 100)}%"
+            filtered_results.append(r_display)
+    
+    if filtered_results:
+        # Displaying with specific columns for a cleaner look
+        st.table(filtered_results)
+    else:
+        st.info(f"No matches found above the current confidence threshold ({int(confidence_threshold * 100)}%). Try lowering the sensitivity in the sidebar.")
 
     st.divider()
 

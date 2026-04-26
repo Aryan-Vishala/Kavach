@@ -94,3 +94,64 @@ def generate_report(timeline_data):
         print(f"- Confidence: {source_confidence}")
         
     print("\n" + "="*50)
+
+
+def compute_risk_score(results: list) -> dict:
+    """
+    Computes a 0-100 risk score for each platform based on:
+    - Confidence of match (40%)
+    - Modification type severity (30%)
+    - Number of channels on platform (20%)
+    - Spread speed (10%)
+    """
+    MOD_WEIGHT = {
+        "full": 1.0,
+        "edited": 0.9,
+        "cropped": 0.7,
+        "styled": 0.5,
+        "reversed": 0.6,
+        "speed": 0.4
+    }
+
+    platform_scores = {}
+
+    # Group results by platform
+    by_platform = {}
+    for r in results:
+        p = r["platform"]
+        by_platform.setdefault(p, []).append(r)
+
+    max_channels = max(len(v) for v in by_platform.values()) if by_platform else 1
+
+    for platform, events in by_platform.items():
+        # 1. Average confidence across all matches on this platform
+        avg_conf = sum(e["confidence"] for e in events) / len(events)
+        conf_score = avg_conf * 40  # max 40 points
+
+        # 2. Worst modification type on this platform
+        worst_mod = max(events, key=lambda e: MOD_WEIGHT.get(e["type"], 0.5))
+        mod_score = MOD_WEIGHT.get(worst_mod["type"], 0.5) * 30  # max 30 points
+
+        # 3. Number of channels (normalized)
+        channel_score = (len(events) / max_channels) * 20  # max 20 points
+
+        # 4. Spread speed — earlier timestamp = more spread = higher risk
+        # For demo: YouTube gets 10, Instagram 7, Twitter 4
+        speed_map = {"youtube": 10, "instagram": 7, "twitter": 4}
+        speed_score = speed_map.get(platform, 5)
+
+        total = conf_score + mod_score + channel_score + speed_score
+        platform_scores[platform] = round(min(total, 100))
+
+    return platform_scores
+
+
+def risk_label(score: int) -> str:
+    if score >= 80:
+        return "🔴 CRITICAL"
+    elif score >= 60:
+        return "🟠 HIGH"
+    elif score >= 40:
+        return "🟡 MEDIUM"
+    else:
+        return "🟢 LOW"

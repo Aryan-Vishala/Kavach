@@ -6,3 +6,4 @@ numpy
 networkx
 matplotlib
 pandas
+google-generativeai
